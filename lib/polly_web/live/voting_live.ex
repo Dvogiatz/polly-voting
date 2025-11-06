@@ -209,7 +209,8 @@ defmodule PollyWeb.VotingLive do
 
   @impl true
   def handle_event("update_votes", %{"votes" => votes}, socket) do
-    current_votes =
+    # Parse and cap individual votes at 5
+    parsed_votes =
       votes
       |> Enum.reject(fn {key, _value} -> String.starts_with?(key, "_unused") end)
       |> Enum.map(fn {project_id, count} ->
@@ -220,18 +221,15 @@ defmodule PollyWeb.VotingLive do
       end)
       |> Map.new()
 
-    # Cap total votes at 5
-    total_votes = current_votes |> Map.values() |> Enum.sum()
+    # Check total votes
+    total_votes = parsed_votes |> Map.values() |> Enum.sum()
 
-    # If over 5 votes, proportionally reduce them
+    # If exceeds 5 total, revert to previous valid state
     current_votes =
       if total_votes > 5 do
-        Enum.map(current_votes, fn {project_id, _count} ->
-          {project_id, 0}
-        end)
-        |> Map.new()
+        socket.assigns.current_votes
       else
-        current_votes
+        parsed_votes
       end
 
     total_votes = current_votes |> Map.values() |> Enum.sum()
