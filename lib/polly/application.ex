@@ -9,7 +9,7 @@ defmodule Polly.Application do
   def start(_type, _args) do
     children = [
       PollyWeb.Telemetry,
-      Polly.Repo,
+      # Polly.Repo, # Disabled - using in-memory storage instead
       {DNSCluster, query: Application.get_env(:polly, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Polly.PubSub},
       # In-memory storage for votes and projects
