@@ -16,6 +16,7 @@ defmodule Polly.Storage do
   ]
 
   @users [
+    %{id: "admin", email: "admin@test.com", project_id: nil},
     %{id: "user1", email: "team1@test.com", project_id: 1},
     %{id: "user2", email: "team2@test.com", project_id: 2},
     %{id: "user3", email: "team3@test.com", project_id: 3},

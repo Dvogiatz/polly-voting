@@ -30,6 +30,7 @@ defmodule Polly.Accounts do
 
   # Hardcoded test credentials (for internal temporary deployment only)
   @test_credentials %{
+    "admin@test.com" => "pass0",
     "team1@test.com" => "pass1",
     "team2@test.com" => "pass2",
     "team3@test.com" => "pass3",
