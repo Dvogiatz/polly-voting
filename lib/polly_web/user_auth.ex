@@ -191,6 +191,19 @@ defmodule PollyWeb.UserAuth do
     end
   end
 
+  @doc """
+  Plug to redirect already authenticated users away from login/register pages.
+  """
+  def redirect_if_user_is_authenticated(conn, _opts) do
+    if conn.assigns.current_scope && conn.assigns.current_scope.user do
+      conn
+      |> redirect(to: signed_in_path(conn))
+      |> halt()
+    else
+      conn
+    end
+  end
+
   defp maybe_store_return_to(%{method: "GET"} = conn) do
     put_session(conn, :user_return_to, current_path(conn))
   end

@@ -55,7 +55,7 @@ defmodule PollyWeb.Router do
   end
 
   scope "/", PollyWeb do
-    pipe_through [:browser]
+    pipe_through [:browser, :redirect_if_user_is_authenticated]
 
     live_session :current_user,
       on_mount: [{PollyWeb.UserAuth, :mount_current_scope}] do
@@ -63,6 +63,11 @@ defmodule PollyWeb.Router do
     end
 
     post "/users/log-in", UserSessionController, :create
+  end
+
+  scope "/", PollyWeb do
+    pipe_through [:browser]
+
     delete "/users/log-out", UserSessionController, :delete
   end
 end
