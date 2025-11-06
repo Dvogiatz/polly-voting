@@ -23,15 +23,21 @@ defmodule PollyWeb.VotingLive do
             <h1 class="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
               Hackathon Voting
             </h1>
-            <p class="text-xl text-gray-600">
-              Vote for your favorite projects • You have
-              <span class="font-bold text-indigo-600">{@votes_remaining}</span>
-              votes remaining
-            </p>
+            <%= if @is_admin do %>
+              <p class="text-xl text-gray-600">
+                Admin View • Results Only
+              </p>
+            <% else %>
+              <p class="text-xl text-gray-600">
+                Vote for your favorite projects • You have
+                <span class="font-bold text-indigo-600">{@votes_remaining}</span>
+                votes remaining
+              </p>
+            <% end %>
           </div>
 
-          <%!-- Voting Section (only if user can vote) --%>
-          <%= if @can_vote do %>
+          <%!-- Voting Section (only if user can vote and is not admin) --%>
+          <%= if @can_vote && !@is_admin do %>
             <div class="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
               <h2 class="text-2xl font-bold text-gray-900 mb-6">Cast Your Votes</h2>
 
@@ -298,6 +304,9 @@ defmodule PollyWeb.VotingLive do
     projects_with_votes = Hackathon.list_projects_with_votes()
     max_votes = projects_with_votes |> Enum.map(& &1.vote_count) |> Enum.max(fn -> 0 end)
 
+    # Admin users have no project_id
+    is_admin = is_nil(user.project_id)
+
     votable_projects = Hackathon.list_votable_projects(user)
     user_votes = Hackathon.get_user_votes(user.id)
     current_votes = user_votes |> Enum.map(&{&1.project_id, &1.count}) |> Map.new()
@@ -306,8 +315,9 @@ defmodule PollyWeb.VotingLive do
     socket
     |> assign(:projects_with_votes, projects_with_votes)
     |> assign(:max_votes, max_votes)
+    |> assign(:is_admin, is_admin)
     |> assign(:votable_projects, votable_projects)
-    |> assign(:can_vote, length(votable_projects) > 0)
+    |> assign(:can_vote, length(votable_projects) > 0 && !is_admin)
     |> assign(:current_votes, current_votes)
     |> assign(:votes_remaining, 5 - total_votes)
     |> assign(:has_voted, total_votes > 0)
