@@ -24,10 +24,45 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
+// Hook to limit total votes to 5
+const Hooks = {}
+Hooks.VoteInput = {
+  mounted() {
+    this.el.addEventListener('input', (e) => {
+      const form = e.target.form
+      const inputs = form.querySelectorAll('input[type="number"]')
+      let total = 0
+      
+      inputs.forEach(input => {
+        total += parseInt(input.value) || 0
+      })
+      
+      // If total exceeds 5, revert this input to its previous value
+      if (total > 5) {
+        e.target.value = this.el.dataset.lastValue || 0
+        e.preventDefault()
+        e.stopPropagation()
+      } else {
+        // Store the valid value
+        this.el.dataset.lastValue = e.target.value
+      }
+    })
+    
+    // Initialize with current value
+    this.el.dataset.lastValue = this.el.value
+  },
+  
+  updated() {
+    // Update the stored value when LiveView updates the input
+    this.el.dataset.lastValue = this.el.value
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken}
+  params: {_csrf_token: csrfToken},
+  hooks: Hooks
 })
 
 // Show progress bar on live navigation and form submits

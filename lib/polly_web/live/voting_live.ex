@@ -56,6 +56,8 @@ defmodule PollyWeb.VotingLive do
                           value={Map.get(@current_votes, project.id, 0)}
                           min="0"
                           max="5"
+                          phx-hook="VoteInput"
+                          id={"vote-input-#{project.id}"}
                           class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                       </div>
@@ -210,7 +212,7 @@ defmodule PollyWeb.VotingLive do
   @impl true
   def handle_event("update_votes", %{"votes" => votes}, socket) do
     # Parse and cap individual votes at 5
-    parsed_votes =
+    current_votes =
       votes
       |> Enum.reject(fn {key, _value} -> String.starts_with?(key, "_unused") end)
       |> Enum.map(fn {project_id, count} ->
@@ -220,17 +222,6 @@ defmodule PollyWeb.VotingLive do
         {String.to_integer(project_id), count_int}
       end)
       |> Map.new()
-
-    # Check total votes
-    total_votes = parsed_votes |> Map.values() |> Enum.sum()
-
-    # If exceeds 5 total, revert to previous valid state
-    current_votes =
-      if total_votes > 5 do
-        socket.assigns.current_votes
-      else
-        parsed_votes
-      end
 
     total_votes = current_votes |> Map.values() |> Enum.sum()
     votes_remaining = 5 - total_votes
