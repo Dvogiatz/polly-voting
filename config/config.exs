@@ -21,7 +21,7 @@ config :polly, :scopes,
   ]
 
 config :polly,
-  ecto_repos: [Polly.Repo],
+  # ecto_repos: [Polly.Repo], # Disabled - using in-memory storage
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
