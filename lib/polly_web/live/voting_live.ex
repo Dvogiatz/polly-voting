@@ -24,7 +24,9 @@ defmodule PollyWeb.VotingLive do
               Hackathon Voting
             </h1>
             <p class="text-xl text-gray-600">
-              Vote for your favorite projects • You have <span class="font-bold text-indigo-600">{@votes_remaining}</span> votes remaining
+              Vote for your favorite projects • You have
+              <span class="font-bold text-indigo-600">{@votes_remaining}</span>
+              votes remaining
             </p>
           </div>
 
@@ -33,7 +35,12 @@ defmodule PollyWeb.VotingLive do
             <div class="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
               <h2 class="text-2xl font-bold text-gray-900 mb-6">Cast Your Votes</h2>
 
-              <.form for={@vote_form} id="voting-form" phx-change="update_votes" phx-submit="submit_votes">
+              <.form
+                for={@vote_form}
+                id="voting-form"
+                phx-change="update_votes"
+                phx-submit="submit_votes"
+              >
                 <div class="space-y-4">
                   <%= for project <- @votable_projects do %>
                     <div class="flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 hover:border-indigo-300 transition-all">
@@ -69,7 +76,9 @@ defmodule PollyWeb.VotingLive do
                       <% @votes_remaining > 0 -> %>
                         {abs(@votes_remaining)} {if @votes_remaining == 1, do: "vote", else: "votes"} remaining
                       <% @votes_remaining < 0 -> %>
-                        ⚠ Over by {abs(@votes_remaining)} {if abs(@votes_remaining) == 1, do: "vote", else: "votes"}
+                        ⚠ Over by {abs(@votes_remaining)} {if abs(@votes_remaining) == 1,
+                          do: "vote",
+                          else: "votes"}
                     <% end %>
                   </div>
 
@@ -78,11 +87,13 @@ defmodule PollyWeb.VotingLive do
                     disabled={@votes_remaining != 0 || @has_voted}
                     class={[
                       "px-8 py-3 rounded-lg font-semibold transition-all",
-                      (@votes_remaining == 0 && !@has_voted) && "bg-indigo-600 hover:bg-indigo-700 text-white",
-                      (@votes_remaining != 0 || @has_voted) && "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      @votes_remaining == 0 && !@has_voted &&
+                        "bg-indigo-600 hover:bg-indigo-700 text-white",
+                      (@votes_remaining != 0 || @has_voted) &&
+                        "bg-gray-300 text-gray-500 cursor-not-allowed"
                     ]}
                   >
-                    <%= if @has_voted, do: "✓ Votes Submitted", else: "Submit Votes" %>
+                    {if @has_voted, do: "✓ Votes Submitted", else: "Submit Votes"}
                   </button>
                 </div>
               </.form>
@@ -156,7 +167,12 @@ defmodule PollyWeb.VotingLive do
                 class="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -198,9 +214,25 @@ defmodule PollyWeb.VotingLive do
       |> Enum.reject(fn {key, _value} -> String.starts_with?(key, "_unused") end)
       |> Enum.map(fn {project_id, count} ->
         count_int = parse_count(count)
+        # Cap each vote at 5
+        count_int = min(count_int, 5)
         {String.to_integer(project_id), count_int}
       end)
       |> Map.new()
+
+    # Cap total votes at 5
+    total_votes = current_votes |> Map.values() |> Enum.sum()
+
+    # If over 5 votes, proportionally reduce them
+    current_votes =
+      if total_votes > 5 do
+        Enum.map(current_votes, fn {project_id, _count} ->
+          {project_id, 0}
+        end)
+        |> Map.new()
+      else
+        current_votes
+      end
 
     total_votes = current_votes |> Map.values() |> Enum.sum()
     votes_remaining = 5 - total_votes
@@ -217,20 +249,29 @@ defmodule PollyWeb.VotingLive do
       |> Enum.reject(fn {key, _value} -> String.starts_with?(key, "_unused") end)
       |> Enum.map(fn {project_id, count} ->
         count_int = parse_count(count)
+        # Cap each vote at 5
+        count_int = min(count_int, 5)
         {String.to_integer(project_id), count_int}
       end)
       |> Enum.filter(fn {_project_id, count} -> count > 0 end)
       |> Map.new()
 
-    case Hackathon.cast_votes(socket.assigns.current_scope.user, current_votes) do
-      {:ok, _} ->
-        Phoenix.PubSub.broadcast(Polly.PubSub, "votes", :votes_updated)
+    # Validate total is exactly 5
+    total_votes = current_votes |> Map.values() |> Enum.sum()
 
-        {:noreply,
-         socket
-         |> assign(:has_voted, true)
-         |> put_flash(:info, "Your votes have been submitted successfully!")
-         |> load_data()}
+    if total_votes != 5 do
+      {:noreply, put_flash(socket, :error, "You must allocate exactly 5 votes!")}
+    else
+      case Hackathon.cast_votes(socket.assigns.current_scope.user, current_votes) do
+        {:ok, _} ->
+          Phoenix.PubSub.broadcast(Polly.PubSub, "votes", :votes_updated)
+
+          {:noreply,
+           socket
+           |> assign(:has_voted, true)
+           |> put_flash(:info, "Your votes have been submitted successfully!")
+           |> load_data()}
+      end
     end
   end
 
@@ -289,12 +330,14 @@ defmodule PollyWeb.VotingLive do
 
   defp parse_count(""), do: 0
   defp parse_count(nil), do: 0
+
   defp parse_count(count) when is_binary(count) do
     case Integer.parse(count) do
       {num, _} -> num
       :error -> 0
     end
   end
+
   defp parse_count(count) when is_integer(count), do: count
 
   defp calculate_percentage(_count, 0), do: 0

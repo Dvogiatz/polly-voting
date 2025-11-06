@@ -21,7 +21,9 @@ defmodule Polly.Accounts do
   """
   def get_user_by_email(email) when is_binary(email) do
     case Polly.Storage.get_user_by_email(email) do
-      nil -> nil
+      nil ->
+        nil
+
       user ->
         # Convert to User struct for compatibility
         struct(User, Map.put(user, :project, Polly.Storage.get_project(user.project_id)))

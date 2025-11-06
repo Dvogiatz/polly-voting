@@ -5,14 +5,38 @@ defmodule Polly.Storage do
   use Agent
 
   @projects [
-    %{id: 1, name: "CRM - Smart Notifications & Bonus", description: "Smart notification system with bonus features"},
-    %{id: 2, name: "RB - Tournament Hub", description: "Centralized tournament management platform"},
+    %{
+      id: 1,
+      name: "CRM - Smart Notifications & Bonus",
+      description: "Smart notification system with bonus features"
+    },
+    %{
+      id: 2,
+      name: "RB - Tournament Hub",
+      description: "Centralized tournament management platform"
+    },
     %{id: 3, name: "RB - Kambi Mosaic", description: "Kambi integration mosaic view"},
-    %{id: 4, name: "RB - Trending Bet", description: "Trending betting analysis and recommendations"},
+    %{
+      id: 4,
+      name: "RB - Trending Bet",
+      description: "Trending betting analysis and recommendations"
+    },
     %{id: 5, name: "CRM - Worldcup", description: "World Cup customer relationship features"},
-    %{id: 6, name: "CRM - Conversational AI", description: "AI-powered conversational interfaces for CRM"},
-    %{id: 7, name: "RG - Brave new world (AI-led lobby mgt incl boosting)", description: "AI-driven lobby management with boosting capabilities"},
-    %{id: 8, name: "RG - New player casino recs model (soft Game)", description: "Casino recommendation model for new players"}
+    %{
+      id: 6,
+      name: "CRM - Conversational AI",
+      description: "AI-powered conversational interfaces for CRM"
+    },
+    %{
+      id: 7,
+      name: "RG - Brave new world (AI-led lobby mgt incl boosting)",
+      description: "AI-driven lobby management with boosting capabilities"
+    },
+    %{
+      id: 8,
+      name: "RG - New player casino recs model (soft Game)",
+      description: "Casino recommendation model for new players"
+    }
   ]
 
   @users [
@@ -54,13 +78,15 @@ defmodule Polly.Storage do
     Agent.update(__MODULE__, fn state ->
       %{state | votes: Map.put(state.votes, user_id, votes_map)}
     end)
+
     :ok
   end
 
   def get_user_votes(user_id) do
-    votes = Agent.get(__MODULE__, fn state ->
-      Map.get(state.votes, user_id, %{})
-    end)
+    votes =
+      Agent.get(__MODULE__, fn state ->
+        Map.get(state.votes, user_id, %{})
+      end)
 
     votes
     |> Enum.map(fn {project_id, count} ->

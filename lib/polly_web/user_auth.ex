@@ -64,7 +64,12 @@ defmodule PollyWeb.UserAuth do
           assign(conn, :current_scope, Scope.for_user(nil))
 
         user_data ->
-          user = struct(User, Map.put(user_data, :project, Polly.Storage.get_project(user_data.project_id)))
+          user =
+            struct(
+              User,
+              Map.put(user_data, :project, Polly.Storage.get_project(user_data.project_id))
+            )
+
           conn
           |> put_session(:user_id, user.id)
           |> assign(:current_scope, Scope.for_user(user))
@@ -156,7 +161,10 @@ defmodule PollyWeb.UserAuth do
               nil
 
             user_data ->
-              struct(User, Map.put(user_data, :project, Polly.Storage.get_project(user_data.project_id)))
+              struct(
+                User,
+                Map.put(user_data, :project, Polly.Storage.get_project(user_data.project_id))
+              )
           end
         end
 
